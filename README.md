@@ -68,6 +68,16 @@ This will execute all tests in the `tests/` directory using your current environ
 - JWT secret and Fernet key are loaded from environment variables.
 - Passwords are hashed using bcrypt.
 
+## API Documentation
+
+When the backend server is running, interactive API documentation is automatically generated and available via Swagger UI. To access it, open your browser and navigate to:
+
+- `http://localhost:8000/docs` for Swagger UI
+- `http://localhost:8000/redoc` for ReDoc UI
+- `http://localhost:8000/openapi.json` for the raw OpenAPI specification
+
+These endpoints allow you to explore and test your API interactively.
+
 ## License
 
 MIT
