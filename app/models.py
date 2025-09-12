@@ -9,6 +9,7 @@ class User(SQLModel, table=True):
     name: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
+    active: bool = Field(default=True)
 
 
 class Entry(SQLModel, table=True):
@@ -18,7 +19,6 @@ class Entry(SQLModel, table=True):
     user_id: Optional[int] = Field(foreign_key="user.id")
     type: str = Field(regex="^(income|expense)$")
     amount: float
-    currency: str = Field(default="USD")
     description: Optional[str] = None
     entry_date: datetime
     created_at: datetime = Field(default_factory=datetime.now)
@@ -34,6 +34,7 @@ class Category(SQLModel, table=True):
 class Account(SQLModel, table=True):
     id: int = Field(primary_key=True)
     name: str = Field(index=True, nullable=False)
+    currency_code: str = Field(foreign_key="currency.code", nullable=False)
     description: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
@@ -42,4 +43,11 @@ class AccountMembership(SQLModel, table=True):
     account_id: int = Field(foreign_key="account.id", primary_key=True)
     user_id: int = Field(foreign_key="user.id", primary_key=True)
     role: str = Field(default="member")
+    is_owner: bool = Field(default=False)
     joined_at: datetime = Field(default_factory=datetime.now)
+
+class Currency(SQLModel, table=True):
+    code: str = Field(primary_key=True)
+    name: str
+    symbol: str
+    is_active: bool = Field(default=True)

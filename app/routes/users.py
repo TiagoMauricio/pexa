@@ -1,11 +1,10 @@
 from fastapi import APIRouter, HTTPException, Depends
-from sqlmodel import Session, select
-from uuid import uuid4
+from sqlmodel import Session
 from app.database import get_session
 from app.models import User
-from app.schemas import UserCreate, User as UserResponse
+from app.schemas.users import UserCreate, User as UserResponse
 from typing import List
-from app.crud.users import create_user, find_user_by_email, find_all_users
+import app.crud.users as user_crud
 
 router = APIRouter()
 
@@ -17,7 +16,7 @@ async def create_user_endpoint(
     """Create a new user"""
 
     # Check if user with this email already exists
-    existing_user = find_user_by_email(user_data.email, session)
+    existing_user = user_crud.find_user_by_email(user_data.email, session)
 
     if existing_user:
         raise HTTPException(
@@ -26,7 +25,7 @@ async def create_user_endpoint(
         )
 
     # Create new user
-    new_user = create_user(user_data, session)
+    new_user = user_crud.create_user(user_data, session)
     return new_user
 
 @router.get("/users", response_model=List[UserResponse])
@@ -35,5 +34,5 @@ async def get_all_users(
 ):
     """Fetch all users"""
 
-    users = find_all_users(session)
+    users = user_crud.find_all_users(session)
     return users

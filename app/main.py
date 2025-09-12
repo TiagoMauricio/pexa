@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import create_db_and_tables
-from app import routes
+from app.routes.main import api_router
 from contextlib import asynccontextmanager
 
 @asynccontextmanager
@@ -31,4 +31,4 @@ async def health_check():
     return {"status": "ok"}
 
 # Include routers
-app.include_router(routes.router, prefix="/api", tags=["users"])
+app.include_router(api_router, prefix="/api")
