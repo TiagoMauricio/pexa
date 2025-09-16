@@ -1,6 +1,7 @@
 annotated-types==0.7.0
 anyio==4.10.0
 bcrypt==4.3.0
+black==25.1.0
 certifi==2025.8.3
 cfgv==3.4.0
 click==8.2.1
@@ -24,8 +25,10 @@ libpass==1.9.1.post0
 markdown-it-py==4.0.0
 MarkupSafe==3.0.2
 mdurl==0.1.2
+mypy_extensions==1.1.0
 nodeenv==1.9.1
 packaging==25.0
+pathspec==0.12.1
 platformdirs==4.4.0
 pluggy==1.6.0
 pre_commit==4.3.0

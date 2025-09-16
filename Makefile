@@ -1,6 +1,6 @@
 PYTHON=python3
 
-.PHONY: test install dev-install format lint clean venv help
+.PHONY: test install format lint clean venv help
 
 # Run tests
 test:
@@ -9,10 +9,6 @@ test:
 # Install production dependencies
 install:
 	$(PYTHON) -m pip install -r requirements.txt
-
-# Install development dependencies
-dev-install: install
-	$(PYTHON) -m pip install pytest black pre-commit
 
 # Format code with Black
 format:
