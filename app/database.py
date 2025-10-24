@@ -1,16 +1,14 @@
 from sqlmodel import create_engine, Session, SQLModel
-import os
-from dotenv import load_dotenv
 from typing import Annotated
 from fastapi import Depends
+from app.config import settings
 
-load_dotenv()
 connect_args = (
     {"check_same_thread": False}
-    if os.getenv("DATABASE_URL").startswith("sqlite")
+    if settings.database_url.startswith("sqlite")
     else {}
 )
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./db.sqlite3")
+DATABASE_URL = settings.database_url
 
 engine = create_engine(DATABASE_URL, connect_args=connect_args)
 

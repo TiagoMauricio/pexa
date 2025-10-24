@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Optional
 from sqlmodel import SQLModel, Field
 
+
 class User(SQLModel, table=True):
     id: int = Field(primary_key=True)
     email: str = Field(unique=True, index=True, nullable=False)
@@ -24,12 +25,14 @@ class Entry(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
 
+
 class Category(SQLModel, table=True):
     id: int = Field(primary_key=True)
     account_id: Optional[int] = Field(default=None, foreign_key="account.id")
     name: str
     type: str = Field(regex="^(income|expense)$")
     is_default: bool = Field(default=False)
+
 
 class Account(SQLModel, table=True):
     id: int = Field(primary_key=True)
@@ -39,12 +42,14 @@ class Account(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
 
+
 class AccountMembership(SQLModel, table=True):
     account_id: int = Field(foreign_key="account.id", primary_key=True)
     user_id: int = Field(foreign_key="user.id", primary_key=True)
     role: str = Field(default="member")
     is_owner: bool = Field(default=False)
     joined_at: datetime = Field(default_factory=datetime.now)
+
 
 class Currency(SQLModel, table=True):
     code: str = Field(primary_key=True)
