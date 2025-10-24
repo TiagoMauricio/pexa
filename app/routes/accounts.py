@@ -8,17 +8,17 @@ from typing import List
 
 router = APIRouter()
 
-@router.get("/accounts", response_model=List[AccountResponse])
+@router.get("", response_model=List[AccountResponse])
 async def get_all_accounts(session: Session = Depends(get_session)):
     accounts = account_crud.get_all_accounts(session)
     return accounts
 
-@router.get("/accounts/{account_id}", response_model=AccountResponse)
+@router.get("/{account_id}", response_model=AccountResponse)
 async def get_account_by_id(account_id: int, session: Session = Depends(get_session)):
     account = account_crud.get_account_by_id(account_id, session)
     return account
 
-@router.post("/accounts")
+@router.post("")
 async def create_account_endpoint(
     account_data: AccountCreate,
     session: Session = Depends(get_session)
