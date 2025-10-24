@@ -1,15 +1,25 @@
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-import os
-from dotenv import load_dotenv
+from sqlmodel import create_engine, Session, SQLModel
+from typing import Annotated
+from fastapi import Depends
+from app.config import settings
 
-load_dotenv()
-
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./db.sqlite3")
-
-engine = create_engine(
-    DATABASE_URL, connect_args={"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
+connect_args = (
+    {"check_same_thread": False}
+    if settings.database_url.startswith("sqlite")
+    else {}
 )
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-Base = declarative_base()
+DATABASE_URL = settings.database_url
+
+engine = create_engine(DATABASE_URL, connect_args=connect_args)
+
+
+def create_db_and_tables():
+    SQLModel.metadata.create_all(engine)
+
+
+def get_session():
+    with Session(engine) as session:
+        yield session
+
+
+SessionDependency = Annotated[Session, Depends(get_session)]

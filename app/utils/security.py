@@ -1,61 +1,73 @@
-from passlib.context import CryptContext
-from datetime import datetime, timedelta
-from jose import JWTError, jwt
-import os
-from dotenv import load_dotenv
+from datetime import datetime, timedelta, timezone
+from typing import Dict, Any
 
-load_dotenv()
+import jwt
+from fastapi import HTTPException, status
+from argon2 import PasswordHasher, exceptions
 
-SECRET_KEY = os.getenv("SECRET_KEY", "supersecretkey")
+from app.config import settings
+
+# Initialize Argon2 password hasher
+ph = PasswordHasher(
+    time_cost=3,          # Number of iterations
+    memory_cost=65536,    # 64MB
+    parallelism=4,        # Number of parallel threads
+    hash_len=32,          # Hash length
+    salt_len=16           # Salt length
+)
+
+# JWT settings
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 
-def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
+def hash_password(password: str) -> str:
+    """Hash a password using Argon2"""
+    return ph.hash(password)
 
 
-def get_password_hash(password):
-    return pwd_context.hash(password)
-
-
-def create_access_token(data: dict, expires_delta: timedelta = None):
-    to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
-
-
-def create_refresh_token(data: dict, expires_delta: timedelta = None):
-    to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(days=7)
-    to_encode.update({"exp": expire, "type": "refresh"})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
-
-
-def decode_access_token(token: str):
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Verify a password against a hash using Argon2"""
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return ph.verify(hashed_password, plain_password)
+    except (exceptions.VerifyMismatchError, exceptions.InvalidHash):
+        return False
+    except exceptions.VerificationError:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error during password verification"
+        )
+
+
+def create_access_token(data: Dict[str, Any]) -> str:
+    """Create a new JWT access token"""
+    to_encode = data.copy()
+    expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    to_encode.update({"exp": expire, "type": "access"})
+    return jwt.encode(to_encode, settings.secret_key, algorithm=ALGORITHM)
+
+
+def verify_token(token: str) -> Dict[str, Any]:
+    """Verify JWT token and return its payload"""
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+    try:
+        payload = jwt.decode(
+            token,
+            settings.secret_key,
+            algorithms=[ALGORITHM],
+            options={"require": ["exp", "sub"]}
+        )
         return payload
-    except JWTError:
-        return None
-
-
-def decode_refresh_token(token: str):
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        if payload.get("type") == "refresh":
-            return payload
-        return None
-    except JWTError:
-        return None
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has expired",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    except jwt.PyJWTError:
+        raise credentials_exception
