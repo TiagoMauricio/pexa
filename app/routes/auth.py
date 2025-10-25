@@ -1,3 +1,4 @@
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import Session
@@ -65,6 +66,12 @@ async def login(
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+    # Update last login timestamp
+    user.last_login = datetime.now()
+    session.add(user)
+    session.commit()
+    session.refresh(user)
 
     access_token = create_access_token(data={"sub": user.email})
 

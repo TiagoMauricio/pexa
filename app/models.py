@@ -8,10 +8,10 @@ class User(SQLModel, table=True):
     email: str = Field(unique=True, index=True, nullable=False)
     password_hash: str = Field(nullable=False)
     name: Optional[str] = None
-    created_at: datetime = Field(default_factory=datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(
-        default_factory=datetime.now(timezone.utc),
-        sa_column_kwargs={"onupdate": datetime.now(timezone.utc)}
+        default_factory=datetime.now,
+        sa_column_kwargs={"onupdate": datetime.now}
     )
     is_active: bool = Field(default=True, sa_column_kwargs={"server_default": "1"})
     last_login: Optional[datetime] = None
