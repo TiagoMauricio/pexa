@@ -51,74 +51,6 @@ def create_access_token(data: Dict[str, Any]) -> str:
     return jwt.encode(to_encode, settings.secret_key, algorithm=ALGORITHM)
 
 
-def create_refresh_token(user_id: int) -> str:
-    """Create a new JWT refresh token"""
-    expire = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
-    to_encode = {"sub": str(user_id), "exp": expire, "type": "refresh"}
-    return jwt.encode(to_encode, settings.secret_key, algorithm=ALGORITHM)
-
-
-def verify_refresh_token(token: str) -> Dict[str, Any]:
-    """Verify refresh token and return its payload"""
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Invalid refresh token",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-
-    try:
-        payload = jwt.decode(
-            token,
-            settings.secret_key,
-            algorithms=[ALGORITHM],
-            options={"require": ["exp", "sub", "type"]},
-        )
-
-        if payload.get("type") != "refresh":
-            raise credentials_exception
-
-        return payload
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Refresh token has expired",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    except jwt.PyJWTError:
-        raise credentials_exception
-
-
-def revoke_refresh_token(token: str, db: Session) -> None:
-    """Revoke a refresh token by adding it to the database"""
-    try:
-        jwt.decode(
-            token,
-            settings.secret_key,
-            algorithms=[ALGORITHM],
-            options={"verify_exp": False},  # We want to revoke even if expired
-        )
-
-        # Check if token is already revoked
-        statement = select(RefreshToken).where(
-            RefreshToken.token == token,
-            not RefreshToken.revoked
-        )
-        existing_token = db.exec(statement).first()
-
-        if not existing_token:
-            return  # Token already revoked or doesn't exist
-
-        # Mark token as revoked
-        existing_token.revoked = True
-        db.add(existing_token)
-        db.commit()
-
-    except jwt.PyJWTError:
-        # If token is invalid, there's nothing to revoke
-        # TODO: LOG that an invalid token was provided
-        pass
-
-
 def verify_token(token: str) -> Dict[str, Any]:
     """Verify JWT access token and return its payload"""
     credentials_exception = HTTPException(
@@ -147,3 +79,78 @@ def verify_token(token: str) -> Dict[str, Any]:
         )
     except jwt.PyJWTError:
         raise credentials_exception
+
+
+def create_refresh_token(user_id: int, db: Session) -> str:
+    """Create a new JWT refresh token"""
+    expire = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    to_encode = {"sub": str(user_id), "exp": expire, "type": "refresh"}
+    token = jwt.encode(to_encode, settings.refresh_token_secret_key, algorithm=ALGORITHM)
+    db.add(RefreshToken(token=token, user_id=user_id, expires_at=expire))
+    db.commit()
+    return token
+
+
+def verify_refresh_token(token: str) -> Dict[str, Any]:
+    """Verify refresh token and return its payload"""
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Invalid refresh token",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+    try:
+        payload = jwt.decode(
+            token,
+            settings.refresh_token_secret_key,
+            algorithms=[ALGORITHM],
+            options={"require": ["exp", "sub", "type"]},
+        )
+
+        if payload.get("type") != "refresh":
+            raise credentials_exception
+
+        return payload
+    except jwt.ExpiredSignatureError:
+        revoke_refresh_token(token)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh token has expired",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    except jwt.PyJWTError:
+        raise credentials_exception
+
+
+def revoke_refresh_token(token: str, db: Session) -> None:
+    """Revoke a refresh token by adding it to the database"""
+    try:
+        jwt.decode(
+            token,
+            settings.refresh_token_secret_key,
+            algorithms=[ALGORITHM],
+            options={"verify_exp": False},  # We want to revoke even if expired
+        )
+        print("Token: ", token)
+        # Check if token is already revoked
+        statement = select(RefreshToken).where(
+            RefreshToken.token == token
+        )
+        existing_token = db.exec(statement).first()
+        print("Existing token: ", existing_token)
+
+        if not existing_token:
+            print("ERROR: Refresh token not found")
+            return  # Token already revoked or doesn't exist
+
+        # Mark token as revoked
+        existing_token.revoked = True
+        db.add(existing_token)
+        db.commit()
+        print("Refresh token revoked successfully")
+
+    except jwt.PyJWTError:
+        # If token is invalid, there's nothing to revoke
+        # TODO: LOG that an invalid token was provided
+        print("ERROR: Invalid refresh token")
+        pass

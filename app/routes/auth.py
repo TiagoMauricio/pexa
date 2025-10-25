@@ -6,10 +6,13 @@ from sqlmodel import Session
 from app.database import get_session
 import app.crud.users as user_crud
 from app.schemas.users import UserCreate, User as UserResponse
-from app.schemas.token import Token
+from app.schemas.token import Token, TokenRefresh
 from app.utils.security import (
     verify_password,
     create_access_token,
+    create_refresh_token,
+    verify_refresh_token,
+    revoke_refresh_token,
 )
 
 router = APIRouter(tags=["authentication"])
@@ -52,9 +55,8 @@ async def register_user(
 async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     session: Session = Depends(get_session),
-):
-    """
-    OAuth2 compatible token login, get an access token for future requests.
+) -> Token:
+    """OAuth2 compatible token login, get an access token for future requests.
 
     - **username**: The user's email
     - **password**: The user's password
@@ -73,6 +75,41 @@ async def login(
     session.commit()
     session.refresh(user)
 
-    access_token = create_access_token(data={"sub": user.email})
+    access_token = create_access_token(data={"sub": str(user.id)})
+    refresh_token = create_refresh_token(user.id, session)
 
-    return {"access_token": access_token, "token_type": "bearer"}
+    return Token(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        token_type="bearer"
+    )
+
+
+@router.post("/refresh", response_model=Token)
+async def refresh_token(
+    token_data: TokenRefresh,
+    session: Session = Depends(get_session),
+) -> Token:
+    """Refresh an access token using a refresh token.
+
+    - **refresh_token**: A valid refresh token
+    """
+    try:
+        payload = verify_refresh_token(token_data.refresh_token)
+        print(payload)
+        user_id = int(payload.get("sub"))
+        print(user_id)
+        revoke_refresh_token(token_data.refresh_token, session)
+        access_token = create_access_token(data={"sub": str(user_id)})
+        refresh_token = create_refresh_token(user_id, session)
+        return Token(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            token_type="bearer"
+        )
+    except HTTPException as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid refresh token",
+            headers={"WWW-Authenticate": "Bearer"},
+        ) from exc
