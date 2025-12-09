@@ -13,6 +13,7 @@ from app.utils.security import (
     create_refresh_token,
     verify_refresh_token,
     revoke_refresh_token,
+    verify_token
 )
 
 router = APIRouter(tags=["authentication"])
@@ -107,6 +108,24 @@ async def refresh_token(
             refresh_token=refresh_token,
             token_type="bearer"
         )
+    except HTTPException as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid refresh token",
+            headers={"WWW-Authenticate": "Bearer"},
+        ) from exc
+
+@router.post("/logout")
+async def logout(token_data: Token, session: Session = Depends(get_session)):
+    """
+    Logout a user when a session is provided
+    - **auth_token**: A valid authentication token
+    """
+    try:
+        # TODO: how to actually logout the user?
+        payload = verify_token(token_data.auth_token)
+        user_id = int(payload.get("sub"))
+        revoke_token(token_data.auth_token, session)
     except HTTPException as exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
