@@ -1,6 +1,6 @@
-from datetime import datetime
-from typing import Optional
-from sqlmodel import SQLModel, Field
+from datetime import datetime, timezone
+from typing import Optional, List
+from sqlmodel import SQLModel, Field, Relationship
 
 
 class User(SQLModel, table=True):
@@ -9,8 +9,16 @@ class User(SQLModel, table=True):
     password_hash: str = Field(nullable=False)
     name: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.now)
-    updated_at: datetime = Field(default_factory=datetime.now)
-    active: bool = Field(default=True)
+    updated_at: datetime = Field(
+        default_factory=datetime.now,
+        sa_column_kwargs={"onupdate": datetime.now}
+    )
+    is_active: bool = Field(default=True, sa_column_kwargs={"server_default": "1"})
+    last_login: Optional[datetime] = None
+    last_activity: Optional[datetime] = None
+
+    # Relationships
+    refresh_tokens: List["RefreshToken"] = Relationship(back_populates="user")
 
 
 class Entry(SQLModel, table=True):
@@ -49,6 +57,23 @@ class AccountMembership(SQLModel, table=True):
     role: str = Field(default="member")
     is_owner: bool = Field(default=False)
     joined_at: datetime = Field(default_factory=datetime.now)
+
+
+class RefreshToken(SQLModel, table=True):
+    id: int = Field(primary_key=True)
+    user_id: int = Field(foreign_key="user.id", nullable=False, index=True)
+    token: str = Field(nullable=False, index=True)  # Hashed token
+    expires_at: datetime = Field(nullable=False)
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
+    revoked: bool = Field(
+        default=False,
+        sa_column_kwargs={"server_default": "0"}
+    )
+
+    # Relationships
+    user: "User" = Relationship(back_populates="refresh_tokens")
 
 
 class Currency(SQLModel, table=True):
