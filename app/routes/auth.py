@@ -99,7 +99,7 @@ async def refresh_token(
     - **refresh_token**: A valid refresh token
     """
     try:
-        payload = verify_refresh_token(token_data.refresh_token)
+        payload = verify_refresh_token(token_data.refresh_token, db=session)
         user_email = payload.get("sub")
         user = user_crud.find_user_by_email(email=user_email, session=session)
         revoke_refresh_token(token=token_data.refresh_token, db=session)

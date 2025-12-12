@@ -95,7 +95,7 @@ def create_refresh_token(data: dict[str, Any], user_id: int, db: Session) -> str
     return token
 
 
-def verify_refresh_token(token: str) -> dict[str, Any]:
+def verify_refresh_token(token: str, db: Session) -> dict[str, Any]:
     """Verify refresh token and return its payload"""
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -116,7 +116,7 @@ def verify_refresh_token(token: str) -> dict[str, Any]:
 
         return payload
     except jwt.ExpiredSignatureError:
-        revoke_refresh_token(token)
+        revoke_refresh_token(token=token, db=db)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Refresh token has expired",
