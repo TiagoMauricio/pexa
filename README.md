@@ -2,6 +2,19 @@
 
 A self hostable API for personal expense tracking built with [FastAPI](https://github.com/fastapi/fastapi)
 
+## Goal
+
+Primary:
+
+* Simple expense tracking to allow frontends to graph information in a simple way
+* Allow multiple users to record expenses in the same account (Great for couples)
+* Easy to self host
+
+North star:
+
+* Build an API Standard that can be integrated with custom UI client applications (both desktop and mobile) to achieve a modular ecosystem
+* Support delay tolerant operation (register your expenses even if you're offline in your client app and then upload them when you're connected)
+
 ## Context
 
 There are many great opensource options for personal finance tracking. However, I felt like they were either too feature full or lacking particular features I was looking for.
@@ -16,7 +29,7 @@ I've built a couple tools using Django and worked in a professional setting with
 
 ## Contributing
 
-If you wish to contribute, please reach out:
+If you wsh to contribute:
 - Fork the project and create a PR.
 - Create an issue on this repo.
 - I have a Discord for my projects, I can add you to it.
