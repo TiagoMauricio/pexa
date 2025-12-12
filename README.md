@@ -54,7 +54,7 @@ make install
 uvicorn app.main:app --reload
 ```
 
-## Docker (WIP)
+## Docker
 
 Build and run with Docker:
 
