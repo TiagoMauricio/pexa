@@ -1,51 +1,60 @@
-# Personal Budget App Backend
+# YABA - Yet Another Budgeting App
 
-A secure, lightweight FastAPI backend for personal finance budgeting, supporting:
+**[Yabba-Dabba-Doo!](https://flintstones.fandom.com/wiki/Yabba-Dabba-Doo!)**
 
-- User registration/login with JWT authentication
-- SQLite database (easily swappable for PostgreSQL)
-- Field-level encryption of sensitive data (Fernet)
-- Users, budgets, categories, transactions, and budget sharing
-- Secure-by-default: password hashing, JWT secrets, encrypted fields
+A self hostable API for personal expense tracking built with [FastAPI](https://github.com/fastapi/fastapi)
 
-## For development
+## Context
 
-Reference repository: https://github.com/fastapi/full-stack-fastapi-template/tree/master
+There are many great opensource options for personal finance tracking. However, I felt like they were either too feature full or lacking particular features I was looking for.
+YABA strives to achieve a middle ground where it can track your personal finances and share the progress with your significant other so that multiple people can register expenses on the same account.
 
-## Folder Structure
+:warning: This API is still in early stages of development.
 
-```plain_text
-app/
-  ├── main.py
-  ├── database.py
-  ├── models/
-  ├── schemas/
-  ├── crud/
-  ├── routes/
-  └── utils/
-```
+## Goal
+
+Primary:
+
+* Simple expense tracking to allow client frontends to graph information in a simple way
+* Allow multiple users to record expenses in the same account (Great for couples)
+* Easy to self host
+
+North star:
+
+* Build an API Standard that can be integrated with custom UI client applications (both desktop and mobile) to achieve a modular ecosystem
+* Support delay tolerant operation (register your expenses when you're offline in your client app and then sync when you're connected)
+
+## Technology
+
+I chose FastAPI because python was my first language and since I'm not a backend engineer, I prefered to ignore the barrier of a new language to make it easier to progress.
+I've built a couple tools using Django and worked in a professional setting with Flask, so I wanted to learn a new framework and FastAPI seemed promissing.
+
+## Contributing
+
+Contributions are welcome! :smile:
+
+If you wish to contribute:
+- Fork the project and create a PR.
+- Create an issue on this repo.
+- I have a Discord for my projects, I can add you to it.
+
+This is my first opensource project that I am looking for contributions for and I am still learning how to manage this :blush:
 
 ## Setup
 
 1. Copy `.env.example` to `.env` and fill in secrets.
 2. Install dependencies:
 
-   ```sh
-   pip install -r requirements.txt
-   ```
+```sh
+make venv
+make install
+```
 
-3. Run the app:
+3. Run the app locally:
 
-   ```sh
-   uvicorn app.main:app --reload
-   ```
-
-## API Endpoints
-
-- `/api/auth/register` — Register user
-- `/api/auth/login` — Login user (returns JWT)
-- `/api/users/me` — Get current user
-- `/api/users/` — CRUD users
+```sh
+uvicorn app.main:app --reload
+```
 
 ## Docker
 
@@ -58,23 +67,14 @@ docker run -p 8000:8000 --env-file .env budget-app
 
 ## Running Tests
 
-To run the backend test suite:
+To run the test suite:
 
 ```sh
-PYTHONPATH=. pytest
+make test
 ```
 
 This will execute all tests in the `tests/` directory using your current environment and database. For a clean test run, ensure your virtual environment is activated and dependencies are installed.
 
-## API Documentation
-
-When the backend server is running, interactive API documentation is automatically generated and available via Swagger UI. To access it, open your browser and navigate to:
-
-- `http://localhost:8000/docs` for Swagger UI
-- `http://localhost:8000/openapi.json` for the raw OpenAPI specification
-
-These endpoints allow you to explore and test your API interactively.
-
 ## License
 
-MIT
+This project is licensed under the terms of the MIT license.
