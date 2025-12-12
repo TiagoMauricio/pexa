@@ -117,15 +117,17 @@ async def refresh_token(
             headers={"WWW-Authenticate": "Bearer"},
         ) from exc
 
-@router.post("/logout")
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
 async def logout(token: Annotated[str, Depends(get_current_user)], session: Session = Depends(get_session)):
     """
     Logout a user when a session is provided
     - **auth_token**: A valid authentication token
     """
     try:
-        # TODO: how to actually logout the user?
-        revoke_token(token, session)
+        # User will eventually logged out
+        # client should remove JWT token after this call
+        revoke_refresh_token(token=token, db=session)
+
     except HTTPException as exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
