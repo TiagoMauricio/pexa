@@ -2,25 +2,25 @@
 
 A self hostable API for personal expense tracking built with [FastAPI](https://github.com/fastapi/fastapi)
 
-## Goal
-
-Primary:
-
-* Simple expense tracking to allow frontends to graph information in a simple way
-* Allow multiple users to record expenses in the same account (Great for couples)
-* Easy to self host
-
-North star:
-
-* Build an API Standard that can be integrated with custom UI client applications (both desktop and mobile) to achieve a modular ecosystem
-* Support delay tolerant operation (register your expenses even if you're offline in your client app and then upload them when you're connected)
-
 ## Context
 
 There are many great opensource options for personal finance tracking. However, I felt like they were either too feature full or lacking particular features I was looking for.
 YABA strives to achieve a middle ground where it can track your personal finances and share the progress with your significant other so that multiple people can register expenses on the same account.
 
 :warning: This API is still in early stages of development.
+
+## Goal
+
+Primary:
+
+* Simple expense tracking to allow client frontends to graph information in a simple way
+* Allow multiple users to record expenses in the same account (Great for couples)
+* Easy to self host
+
+North star:
+
+* Build an API Standard that can be integrated with custom UI client applications (both desktop and mobile) to achieve a modular ecosystem
+* Support delay tolerant operation (register your expenses when you're offline in your client app and then sync when you're connected)
 
 ## Technology
 
