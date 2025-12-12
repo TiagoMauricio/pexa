@@ -1,4 +1,3 @@
-import pytest
 from fastapi.testclient import TestClient
 from sqlmodel import Session
 
@@ -12,10 +11,10 @@ def test_create_user_success(client: TestClient):
         "name": "Test User",
         "password": "testpassword123"
     }
-    
-    response = client.post("/api/users", json=user_data)
-    
-    assert response.status_code == 200
+
+    response = client.post("/api/auth/register", json=user_data)
+ 
+    assert response.status_code == 201
     data = response.json()
     assert data["email"] == user_data["email"]
     assert data["name"] == user_data["name"]
@@ -34,15 +33,15 @@ def test_create_user_duplicate_email(client: TestClient):
         "name": "First User",
         "password": "password123"
     }
-    
+
     # Create first user
-    response1 = client.post("/api/users", json=user_data)
-    assert response1.status_code == 200
-    
+    response1 = client.post("/api/auth/register", json=user_data)
+    assert response1.status_code == 201
+
     # Try to create second user with same email
     user_data["name"] = "Second User"
-    response2 = client.post("/api/users", json=user_data)
-    
+    response2 = client.post("/api/auth/register", json=user_data)
+
     assert response2.status_code == 400
     assert "User with this email already exists" in response2.json()["detail"]
 
@@ -54,9 +53,9 @@ def test_create_user_invalid_email(client: TestClient):
         "name": "Test User",
         "password": "password123"
     }
-    
-    response = client.post("/api/users", json=user_data)
-    
+
+    response = client.post("/api/auth/register", json=user_data)
+
     assert response.status_code == 422  # Validation error
 
 
@@ -67,23 +66,23 @@ def test_create_user_short_password(client: TestClient):
         "name": "Test User",
         "password": "short"  # Less than 8 characters
     }
-    
-    response = client.post("/api/users", json=user_data)
-    
+
+    response = client.post("/api/auth/register", json=user_data)
+
     assert response.status_code == 422  # Validation error
 
 
 def test_create_user_missing_required_fields(client: TestClient):
     """Test creating user with missing required fields fails"""
     # Missing email
-    response1 = client.post("/api/users", json={
+    response1 = client.post("/api/auth/register", json={
         "name": "Test User",
         "password": "password123"
     })
     assert response1.status_code == 422
-    
+ 
     # Missing password
-    response2 = client.post("/api/users", json={
+    response2 = client.post("/api/auth/register", json={
         "email": "test@example.com",
         "name": "Test User"
     })
@@ -96,10 +95,10 @@ def test_create_user_optional_name(client: TestClient):
         "email": "noname@example.com",
         "password": "password123"
     }
-    
-    response = client.post("/api/users", json=user_data)
-    
-    assert response.status_code == 200
+
+    response = client.post("/api/auth/register", json=user_data)
+
+    assert response.status_code == 201
     data = response.json()
     assert data["email"] == user_data["email"]
     assert data["name"] is None
@@ -109,7 +108,7 @@ def test_create_user_optional_name(client: TestClient):
 def test_get_all_users_empty(client: TestClient):
     """Test getting all users when database is empty"""
     response = client.get("/api/users")
-    
+
     assert response.status_code == 200
     data = response.json()
     assert isinstance(data, list)
@@ -124,26 +123,26 @@ def test_get_all_users_with_data(client: TestClient):
         {"email": "user2@example.com", "name": "User Two", "password": "password123"},
         {"email": "user3@example.com", "password": "password123"}  # No name
     ]
-    
+
     # Create users
     for user_data in users_data:
-        response = client.post("/api/users", json=user_data)
-        assert response.status_code == 200
-    
+        response = client.post("/api/auth/register", json=user_data)
+        assert response.status_code == 201
+
     # Get all users
     response = client.get("/api/users")
-    
+
     assert response.status_code == 200
     data = response.json()
     assert isinstance(data, list)
     assert len(data) == 3
-    
+
     # Check that all users are returned with correct fields
     emails = [user["email"] for user in data]
     assert "user1@example.com" in emails
     assert "user2@example.com" in emails
     assert "user3@example.com" in emails
-    
+
     # Verify no sensitive data is exposed
     for user in data:
         assert "password" not in user
@@ -162,15 +161,16 @@ def test_user_password_is_hashed(client: TestClient, session: Session):
         "name": "Hash User",
         "password": "plainpassword123"
     }
-    
-    response = client.post("/api/users", json=user_data)
-    assert response.status_code == 200
-    
+
+    response = client.post("/api/auth/register", json=user_data)
+    assert response.status_code == 201
+
     # Get user from database directly
     user_id = response.json()["id"]
     assert isinstance(user_id, int)  # ID should be an integer
     db_user = session.get(User, user_id)
-    
+
     assert db_user is not None
-    assert db_user.password_hash != user_data["password"]  # Password should be hashed
-    assert db_user.password_hash.startswith("$2b$")  # bcrypt hash format
+    assert db_user.password_hash != user_data["password"]
+    print(db_user.password_hash)
+    assert db_user.password_hash.startswith("$argon2id$")
