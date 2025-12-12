@@ -1,29 +1,17 @@
-# Personal Budget App Backend
+# YABA - Yet Another Budgeting App
 
-A secure, lightweight FastAPI backend for personal finance budgeting, supporting:
+An API for personal finance budgeting and expense tracking for self hosting
+
+## Context
+
+There are many great opensource options for personal finance tracking. However, I felt like they were either too feature full or lacking particular features I was looking for.
+YABA strives to achieve a middle ground where it can track your personal finances and share the progress with your significant other so that multiple people can register expenses on the same account.
 
 - User registration/login with JWT authentication
 - SQLite database (easily swappable for PostgreSQL)
 - Field-level encryption of sensitive data (Fernet)
 - Users, budgets, categories, transactions, and budget sharing
 - Secure-by-default: password hashing, JWT secrets, encrypted fields
-
-## For development
-
-Reference repository: https://github.com/fastapi/full-stack-fastapi-template/tree/master
-
-## Folder Structure
-
-```plain_text
-app/
-  ├── main.py
-  ├── database.py
-  ├── models/
-  ├── schemas/
-  ├── crud/
-  ├── routes/
-  └── utils/
-```
 
 ## Setup
 
