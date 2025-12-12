@@ -1,17 +1,20 @@
 # YABA - Yet Another Budgeting App
 
-An API for personal finance budgeting and expense tracking for self hosting
+A self hostable APIi for personal expense tracking built with FastAPI
 
 ## Context
 
 There are many great opensource options for personal finance tracking. However, I felt like they were either too feature full or lacking particular features I was looking for.
 YABA strives to achieve a middle ground where it can track your personal finances and share the progress with your significant other so that multiple people can register expenses on the same account.
 
-- User registration/login with JWT authentication
-- SQLite database (easily swappable for PostgreSQL)
-- Field-level encryption of sensitive data (Fernet)
-- Users, budgets, categories, transactions, and budget sharing
-- Secure-by-default: password hashing, JWT secrets, encrypted fields
+WARNING: This API is still in early stages of development.
+
+## Technology
+
+I chose FastAPI because python was my first language and since I'm not a backend engineer, I prefered to ignore the barrier of a new language to make it easier to progress.
+I've built a couple tools using Django and worked in a professional setting with Flask, so I wanted to learn a new framework and FastAPI seemed promissing.
+
+
 
 ## Setup
 
