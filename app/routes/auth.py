@@ -122,7 +122,7 @@ async def refresh_token(
 async def logout(refresh_token: str, user: Annotated[str, Depends(get_current_user)], session: Session = Depends(get_session)):
     """
     Logout a user when a session is provided
-    - **refresh_token**: A valid authentication token
+    - **refresh_token**: A valid refresh token
     """
     try:
         # User will eventually logged out
