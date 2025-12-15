@@ -1,8 +1,10 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import List
+from fastapi import HTTPException
 from sqlmodel import Session, select
+from starlette.status import HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN
 from app.models import Account, AccountMembership, User
-from app.schemas.accounts import AccountCreate
+from app.schemas.accounts import AccountBase
 
 
 def get_all_accounts(session: Session) -> List[Account]:
@@ -11,9 +13,20 @@ def get_all_accounts(session: Session) -> List[Account]:
     return session.exec(query).all()
 
 
-def create_account(account: AccountCreate, session: Session) -> Account:
+def create_account(account: AccountBase, user: User, session: Session) -> Account:
     """Create a new account and assign the creator as owner"""
-    new_account = Account(
+
+    user_accounts = get_accounts_by_user(user_id=user.id, session=session)
+
+
+
+    if account.name in [acc.name for acc in user_accounts]:
+        raise HTTPException(
+            status_code=HTTP_400_BAD_REQUEST,
+            detail=f"You already have an account named: {account.name}"
+        )
+
+    new_account: Account = Account(
         name=account.name,
         currency_code=account.currency_code,
         description=account.description
@@ -25,7 +38,7 @@ def create_account(account: AccountCreate, session: Session) -> Account:
     # Create membership record with owner role
     membership = AccountMembership(
         account_id=new_account.id,
-        user_id=account.owner_id,
+        user_id=user.id,
         role="owner",
         is_owner=True
     )
@@ -35,8 +48,13 @@ def create_account(account: AccountCreate, session: Session) -> Account:
     return new_account
 
 
-def get_account_by_id(account_id: int, session: Session) -> Optional[Account]:
+def get_account_by_id(account_id: int, user: User, session: Session) -> Account | None:
     """Get account by ID"""
+    user_accounts = get_accounts_by_user(user_id=user.id, session=session)
+    if account_id not in [acc.id for acc in user_accounts]:
+        raise HTTPException(
+            status_code=HTTP_403_FORBIDDEN
+        )
     return session.get(Account, account_id)
 
 
@@ -65,9 +83,10 @@ def get_user_owned_accounts(user_id: int, session: Session) -> List[Account]:
     return session.exec(query).all()
 
 
-def update_account(account_id: int, name: Optional[str] = None,
-                  currency_code: Optional[str] = None,
-                  description: Optional[str] = None, session: Session = None) -> Optional[Account]:
+def update_account(account_id: int,session: Session,
+                  name: str | None = None,
+                  currency_code: str | None = None,
+                  description: str | None = None) -> Account | None:
     """Update account details"""
     account = session.get(Account, account_id)
     if not account:
@@ -105,7 +124,7 @@ def delete_account(account_id: int, session: Session) -> bool:
     return True
 
 
-def add_user_to_account(account_id: int, user_id: int, role: str = "member", session: Session = None) -> Optional[AccountMembership]:
+def add_user_to_account(account_id: int, user_id: int, session: Session, role: str = "member") -> AccountMembership | None:
     """Add a user to an account with specified role"""
     # Check if membership already exists
     existing_query = select(AccountMembership).where(
