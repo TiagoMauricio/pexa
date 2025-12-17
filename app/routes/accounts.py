@@ -28,3 +28,5 @@ async def create_account_endpoint(
 ):
     new_account = account_crud.create_account(account_data, user, session)
     return new_account
+
+# TODO: create update account endoint

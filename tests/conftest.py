@@ -53,5 +53,4 @@ def userCreated(client: TestClient):
 def jwtToken(client: TestClient, user):
 
     token = create_access_token(data={'sub':user["email"]})
-    print(token)
     yield token
