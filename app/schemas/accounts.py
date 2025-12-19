@@ -9,9 +9,9 @@ class AccountBase(BaseModel):
     currency_code: str = Field(..., min_length=3, max_length=3, description="3-letter currency code (e.g., USD, EUR)")
     description: str | None = Field(None, max_length=500, description="Optional account description")
 
+
 class AccountUpdate(BaseModel):
     """Schema for updating an account"""
-    name: str | None = Field(None, min_length=1, max_length=100, description="Account name")
     currency_code: str | None = Field(None, min_length=3, max_length=3, description="3-letter currency code")
     description: str | None = Field(None, max_length=500, description="Account description")
 
@@ -21,6 +21,7 @@ class Account(AccountBase):
     id: int
     created_at: datetime
     updated_at: datetime
+
     class Config:
         from_attributes = True
 
