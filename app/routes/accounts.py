@@ -3,7 +3,7 @@ from sqlmodel import Session
 from starlette.status import HTTP_200_OK
 from app.database import get_session
 from app.schemas.accounts import AccountBase, AccountUpdate, Account as AccountResponse
-import app.crud.account as account_crud
+import app.crud.accounts as account_crud
 from app.utils.dependencies import get_current_user
 
 from typing import Annotated
@@ -32,12 +32,12 @@ async def create_account_endpoint(
     new_account = account_crud.create_account(account_data, user, session)
     return new_account
 
-# TODO: create update account endoint
 
-
-@router.patch(path="/{acount_id}", status_code=HTTP_200_OK, response_model=AccountResponse)
+@router.patch(path="/{account_id}", status_code=HTTP_200_OK, response_model=AccountResponse)
 async def update_account(
+        account_id: int,
         account_data: AccountUpdate,
         user: Annotated[str, Depends(get_current_user)],
         session: Session = Depends(get_session)):
-    pass
+    account = account_crud.update_account(account_id, account_data, user, session)
+    return account

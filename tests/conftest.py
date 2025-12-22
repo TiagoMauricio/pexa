@@ -5,7 +5,6 @@ from sqlmodel.pool import StaticPool
 
 from app.main import app
 from app.database import get_session
-from app.models import User
 from app.utils.security import create_access_token
 
 
@@ -47,10 +46,10 @@ def userCreated(client: TestClient):
     response = client.post("/api/auth/register", json=user_data)
 
     yield user_data
-    print("delete user")
+
 
 @pytest.fixture(scope="module", name="token")
 def jwtToken(client: TestClient, user):
 
-    token = create_access_token(data={'sub':user["email"]})
+    token = create_access_token(data={'sub': user["email"]})
     yield token

@@ -2,9 +2,9 @@ from datetime import datetime
 from typing import List
 from fastapi import HTTPException
 from sqlmodel import Session, select
-from starlette.status import HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN
+from starlette.status import HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN, HTTP_404_NOT_FOUND
 from app.models import Account, AccountMembership, User
-from app.schemas.accounts import AccountBase
+from app.schemas.accounts import AccountBase, AccountUpdate
 
 
 def get_all_accounts(session: Session) -> List[Account]:
@@ -17,8 +17,6 @@ def create_account(account: AccountBase, user: User, session: Session) -> Accoun
     """Create a new account and assign the creator as owner"""
 
     user_accounts = get_accounts_by_user(user_id=user.id, session=session)
-
-
 
     if account.name in [acc.name for acc in user_accounts]:
         raise HTTPException(
@@ -83,23 +81,25 @@ def get_user_owned_accounts(user_id: int, session: Session) -> List[Account]:
     return session.exec(query).all()
 
 
-def update_account(account_id: int,session: Session,
-                  name: str | None = None,
-                  currency_code: str | None = None,
-                  description: str | None = None) -> Account | None:
+def update_account(account_id: int, account_data: AccountUpdate, user: User, session: Session) -> Account | None:
     """Update account details"""
     account = session.get(Account, account_id)
     if not account:
-        return None
+        raise HTTPException(
+            status_code=HTTP_404_NOT_FOUND,
+            detail=f"Account does not exist."
+        )
+    elif not user_is_account_owner(user.id, account_id, session):
+        raise HTTPException(
+            status_code=HTTP_403_FORBIDDEN,
+            detail=f"You do not own this account."
+        )
 
-    if name is not None:
-        account.name = name
-    if currency_code is not None:
-        account.currency_code = currency_code
-    if description is not None:
-        account.description = description
+    update_data = account_data.model_dump(exclude_unset=True)
 
-    account.updated_at = datetime.now()
+    for field, value in update_data.items():
+        setattr(account, field, value)
+
     session.add(account)
     session.commit()
     session.refresh(account)
@@ -209,4 +209,5 @@ def user_is_account_owner(user_id: int, account_id: int, session: Session) -> bo
         AccountMembership.account_id == account_id,
         AccountMembership.is_owner == True
     )
-    return session.exec(query).first() is not None
+    account = session.exec(query).first()
+    return account is not None
