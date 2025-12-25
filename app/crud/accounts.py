@@ -1,16 +1,17 @@
-from datetime import datetime
-from typing import List
 from fastapi import HTTPException
 from sqlmodel import Session, select
+from collections.abc import Sequence
+from sqlmodel.sql.expression import SelectOfScalar
 from starlette.status import HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN, HTTP_404_NOT_FOUND
 from app.models import Account, AccountMembership, User
 from app.schemas.accounts import AccountBase, AccountUpdate
 
 
-def get_all_accounts(session: Session) -> List[Account]:
+def get_all_accounts(session: Session) -> Sequence[Account]:
     """Get all accounts"""
-    query = select(Account).order_by(Account.created_at.desc())
-    return session.exec(query).all()
+    query: SelectOfScalar[Account] = select(Account).order_by(Account.created_at.desc())
+    result: Sequence[Account] = session.exec(query).all()
+    return result
 
 
 def create_account(account: AccountBase, user: User, session: Session) -> Account:
@@ -56,7 +57,7 @@ def get_account_by_id(account_id: int, user: User, session: Session) -> Account 
     return session.get(Account, account_id)
 
 
-def get_accounts_by_user(user_id: int, session: Session) -> List[Account]:
+def get_accounts_by_user(user_id: int, session: Session) -> Sequence[Account]:
     """Get all accounts that a user has access to"""
     query = (
         select(Account)
@@ -67,7 +68,7 @@ def get_accounts_by_user(user_id: int, session: Session) -> List[Account]:
     return session.exec(query).all()
 
 
-def get_user_owned_accounts(user_id: int, session: Session) -> List[Account]:
+def get_user_owned_accounts(user_id: int, session: Session) -> Sequence[Account]:
     """Get all accounts owned by a user"""
     query = (
         select(Account)
@@ -87,12 +88,12 @@ def update_account(account_id: int, account_data: AccountUpdate, user: User, ses
     if not account:
         raise HTTPException(
             status_code=HTTP_404_NOT_FOUND,
-            detail=f"Account does not exist."
+            detail="Account does not exist."
         )
     elif not user_is_account_owner(user.id, account_id, session):
         raise HTTPException(
             status_code=HTTP_403_FORBIDDEN,
-            detail=f"You do not own this account."
+            detail="You do not own this account."
         )
 
     update_data = account_data.model_dump(exclude_unset=True)
@@ -169,7 +170,7 @@ def remove_user_from_account(account_id: int, user_id: int, session: Session) ->
     return True
 
 
-def get_account_members(account_id: int, session: Session) -> List[dict]:
+def get_account_members(account_id: int, session: Session) -> Sequence[dict]:
     """Get all members of an account with their details"""
     query = (
         select(User, AccountMembership)
